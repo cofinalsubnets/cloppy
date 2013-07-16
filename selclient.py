@@ -20,9 +20,6 @@ class Clipboard(clop.Clipboard):
   def on_change(self, callback):
     self.__backend.connect('owner-change', callback)
 
-  def owner(self):
-    return self.__backend.get_owner()
-
 class SelectionClient():
 
   def __init__(self, selection, debug=False):
