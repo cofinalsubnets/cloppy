@@ -13,7 +13,11 @@
 # for the 'CLIPBOARD' selection, i.e. the one that's accessed when you do
 # an explicit cut/paste. the 'PRIMARY' selection, which is normally
 # updated when you highlight text and dumped with the middle mouse button,
-# can't be changed with this tool (although you can read from it).
+# can't be changed with this tool alone (although you can read from it).
+#
+# if you want to use clop.py to set the contents of the PRIMARY selection,
+# you can use it alongside the included selclient.py script, which _must_ run
+# as a daemon to have any effect.
 
 import os.path
 import json
