@@ -28,12 +28,11 @@ import gtk
 version     = '0.0.1'
 description = 'Persistent registers for storing and retrieving X clipboard data.'
 default_regfile = os.path.expanduser('~/.registers.json')
+operations  = ['get', 'put', 'echo', 'delete']
 
 parser = argparse.ArgumentParser(description=description)
-parser.add_argument('-g', '--get', action='append')
-parser.add_argument('-p', '--put', action='append')
-parser.add_argument('-e', '--echo', action='append')
-parser.add_argument('-d', '--delete', action='append')
+for op in operations:
+  parser.add_argument('-' + op[0], '--' + op, action='append')
 parser.add_argument('--primary', dest='selection', action='store_const', const='PRIMARY',
                     default='CLIPBOARD', help= "use PRIMARY X selection instead of CLIPBOARD")
 parser.add_argument('-V', '--version', action='version', version=('%(prog)s version ' + version))
@@ -42,32 +41,31 @@ parser.add_argument('--regfile', metavar='FILE', default=default_regfile,
 
 def main():
   opts      = parser.parse_args()
-  registers = read_registers(opts.regfile)
   clipboard = Clipboard(opts.selection)
+  registers = readin(opts.regfile)
   orig      = registers.copy()
 
-  for action in get_actions(opts):
-    action(registers, clipboard)
+  for op in operations:
+    for reg in (getattr(opts, op) or []):
+      globals()[op](registers, reg, clipboard)
 
   if registers != orig:
-    write_registers(registers, opts.regfile)
+    writeout(registers, opts.regfile)
 
-def get_actions(opts):
-  for opname in ['get', 'put', 'echo', 'delete']:
-    for reg in (getattr(opts, opname) or []):
-      yield lambda regs, cb: globals()[opname](regs, reg, cb)
-
-def read_registers(regfile):
+def readin(regfile):
   """Attempt to read registers from disk."""
   if os.path.exists(regfile):
     with open(regfile, 'r') as rf:
-      obj = json.load(rf)
+      try:
+        obj = json.load(rf)
+      except ValueError as err:
+        raise ValueError("JSON decoding error when reading %s: %s" % (regfile, err))
     if not isinstance(obj, dict):
       raise TypeError("%s is not a dict" % obj)
     return obj
   return {}
 
-def write_registers(registers, regfile):
+def writeout(registers, regfile):
   """Dump registers to disk."""
   with open(regfile, 'w') as rf:
     json.dump(registers, rf)
@@ -104,7 +102,7 @@ class Clipboard():
     import time
     self.__backend.set_text(txt)
     self.__backend.store()
-    time.sleep(0.05) # give other clients time to register the owner change
+    time.sleep(0.05) # give clients time to register the owner change
     while gtk.events_pending():
       gtk.main_iteration()
 

@@ -1,7 +1,6 @@
 #!/usr/bin/env python2
 import unittest
 import clop
-import types
 
 class Mock():
   def __init__(self, **kwargs):
@@ -54,11 +53,6 @@ class ClopTests(unittest.TestCase):
   def test_delete_empty_register(self):
     clop.delete(self.registers, 'a', self.clipboard)
     self.assertNotIn('a', self.registers)
-
-  def test_get_actions(self):
-    opts  = Mock(get=[1,2,3], put=None, delete=[], echo=[1], ignore=u"poodle")
-    for actn in clop.get_actions(opts):
-      self.assertIsInstance(actn, types.FunctionType)
 
   def test_read_registers_nonexistent_file(self):
     filename = 'zz:\\this\\is\\not\\a\\windows\\box'
