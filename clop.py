@@ -28,11 +28,17 @@ import gtk
 version     = '0.0.1'
 description = 'Persistent registers for storing and retrieving X clipboard data.'
 default_regfile = os.path.expanduser('~/.registers.json')
-operations  = ['get', 'put', 'echo', 'delete']
+
+operations = {
+  'get'    : lambda r,rs,cb: cb.write(rs.get(r, '')),
+  'put'    : lambda r,rs,cb: rs.__setitem__(r, cb.read()),
+  'echo'   : lambda r,rs,cb: sys.stdout.write(rs.get(r, '')),
+  'delete' : lambda r,rs,cb: rs.pop(r, None)
+}
 
 parser = argparse.ArgumentParser(description=description)
 for op in operations:
-  parser.add_argument('-' + op[0], '--' + op, action='append')
+  parser.add_argument('-' + op[0], '--' + op, action='append', default=[])
 parser.add_argument('--primary', dest='selection', action='store_const', const='PRIMARY',
                     default='CLIPBOARD', help= "use PRIMARY X selection instead of CLIPBOARD")
 parser.add_argument('-V', '--version', action='version', version=('%(prog)s version ' + version))
@@ -46,8 +52,8 @@ def main():
   orig      = registers.copy()
 
   for op in operations:
-    for reg in (getattr(opts, op) or []):
-      globals()[op](reg, registers, clipboard)
+    for reg in getattr(opts, op):
+      operations[op](reg, registers, clipboard)
 
   if registers != orig:
     writeout(registers, opts.regfile)
@@ -69,23 +75,6 @@ def writeout(registers, regfile):
   """Dump registers to disk."""
   with open(regfile, 'w') as rf:
     json.dump(registers, rf)
-
-def get(reg, registers, clipboard):
-  """Set clipboard contents from a register."""
-  clipboard.write(registers.get(reg, ''))
-
-def put(reg, registers, clipboard):
-  """Store clipboard contents in a register."""
-  registers[reg] = clipboard.read()
-
-def echo(reg, registers, clipboard):
-  """Echo the contents of a register to stdout."""
-  sys.stdout.write(registers.get(reg, ''))
-
-def delete(reg, registers, clipboard):
-  """Delete a register."""
-  if reg in registers:
-    registers.pop(reg)
 
 class Clipboard():
   """Wrapper for a clipboard implementation (currently GTK).
