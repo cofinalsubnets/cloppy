@@ -10,6 +10,7 @@
 import clop
 import argparse
 import gtk
+import os
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--no-fork', dest='fork', action='store_false', default=True)
@@ -43,7 +44,6 @@ class SelectionClient():
     gtk.main()
 
 def main():
-  import os
   opts = parser.parse_args()
   selclient = SelectionClient(opts.selection, opts.debug)
   if opts.fork:

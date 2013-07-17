@@ -24,6 +24,7 @@ import json
 import argparse
 import sys
 import gtk
+import time
 
 version     = '0.0.1'
 description = 'Persistent registers for storing and retrieving X clipboard data.'
@@ -86,7 +87,6 @@ class Clipboard():
     return self.__backend.wait_for_text() or ''
   def write(self, txt):
     """Set clipboard contents from a string."""
-    import time
     self.__backend.set_text(txt)
     self.__backend.store()
     time.sleep(0.05) # give clients time to register the owner change
