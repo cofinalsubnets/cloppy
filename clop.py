@@ -47,7 +47,7 @@ def main():
 
   for op in operations:
     for reg in (getattr(opts, op) or []):
-      globals()[op](registers, reg, clipboard)
+      globals()[op](reg, registers, clipboard)
 
   if registers != orig:
     writeout(registers, opts.regfile)
@@ -70,23 +70,19 @@ def writeout(registers, regfile):
   with open(regfile, 'w') as rf:
     json.dump(registers, rf)
 
-def get(registers, reg, clipboard):
+def get(reg, registers, clipboard):
   """Set clipboard contents from a register."""
-  txt = registers.get(reg, '')
-  clipboard.write(txt)
+  clipboard.write(registers.get(reg, ''))
 
-def put(registers, reg, clipboard):
+def put(reg, registers, clipboard):
   """Store clipboard contents in a register."""
-  txt = clipboard.read()
-  if isinstance(txt, str):
-    registers[reg] = txt
+  registers[reg] = clipboard.read()
 
-def echo(registers, reg, clipboard):
+def echo(reg, registers, clipboard):
   """Echo the contents of a register to stdout."""
-  txt = registers.get(reg, '')
-  sys.stdout.write(txt)
+  sys.stdout.write(registers.get(reg, ''))
 
-def delete(registers, reg, clipboard):
+def delete(reg, registers, clipboard):
   """Delete a register."""
   if reg in registers:
     registers.pop(reg)
@@ -97,16 +93,16 @@ class Clipboard():
   def __init__(self, sel):
     self.__backend = gtk.clipboard_get(sel)
   def read(self):
-    return self.__backend.wait_for_text()
+    """Return a string containing clipboard contents."""
+    return self.__backend.wait_for_text() or ''
   def write(self, txt):
+    """Set clipboard contents from a string."""
     import time
     self.__backend.set_text(txt)
     self.__backend.store()
     time.sleep(0.05) # give clients time to register the owner change
     while gtk.events_pending():
       gtk.main_iteration()
-
-
 
 if __name__ == '__main__':
   main()
