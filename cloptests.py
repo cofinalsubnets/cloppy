@@ -54,9 +54,9 @@ class ClopTests(unittest.TestCase):
     clop.delete(self.registers, 'a', self.clipboard)
     self.assertNotIn('a', self.registers)
 
-  def test_read_registers_nonexistent_file(self):
+  def test_readin_nonexistent_file(self):
     filename = 'zz:\\this\\is\\not\\a\\windows\\box'
-    registers = clop.read_registers(filename)
+    registers = clop.readin(filename)
     self.assertEqual(registers, {})
 
 if __name__ == '__main__':
