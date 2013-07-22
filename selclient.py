@@ -38,22 +38,23 @@ class SelectionClient():
     if change.reason != 0: # 0: new owner; 1: owner destroyed; 2: owner closed
       self.clipboard.write(self.last)
 
-  def start(self):
+  def start(self, fork=False):
     self.last = self.clipboard.read() or ''
     self.clipboard.on_change(self.callback)
-    gtk.main()
+    if fork:
+      pid = os.fork()
+      if pid == 0:
+        gtk.main()
+      else:
+        return pid
+    else:
+      gtk.main()
+
 
 def main():
   opts = parser.parse_args()
   selclient = SelectionClient(opts.selection, opts.debug)
-  if opts.fork:
-    pid = os.fork()
-    if pid == 0:
-      selclient.start()
-    else:
-      print pid
-  else:
-    selclient.start()
+  print(selclient.start(opts.fork))
 
 if __name__ == '__main__':
   main()

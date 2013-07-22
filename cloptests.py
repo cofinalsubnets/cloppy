@@ -59,6 +59,39 @@ class ClopTests(unittest.TestCase):
     registers = clop.readin(filename)
     self.assertEqual(registers, {})
 
+class EscapeTests(unittest.TestCase):
+  escape_targets = {
+    '\\' : '\\\\',
+    '\n' : '\\\n',
+    '='  :  '\\=',
+    'abc=def\n  =\\\n' : 'abc\\=def\\\n  \\=\\\\\\\n',
+  }
+
+  load_targets = {
+    'a=b\\\nc\\=d' : {'a' : 'b\nc=d'},
+  }
+
+
+  def assertInverse(self, o1, o2, d):
+    self.assertEqual(d, o1(o2(d)))
+
+  def test_escape(self):
+    for txt, targ in self.escape_targets.items():
+      self.assertEqual(clop.escape(txt), targ)
+
+  def test_inverse_unescape(self):
+    for s in self.escape_targets:
+      self.assertInverse(clop.unescape, clop.escape, s)
+
+  def test_loads(self):
+    for txt, targ in self.load_targets.items():
+      self.assertEqual(clop.loads(txt), targ)
+
+  def test_inverse_dumps(self):
+    for s in self.load_targets:
+      self.assertInverse(clop.dumps, clop.loads, s)
+
+
 if __name__ == '__main__':
   unittest.main()
 
