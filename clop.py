@@ -20,20 +20,20 @@
 # as a daemon to have any effect.
 
 import os.path
+import json
 import argparse
-from sys import stdout
+import sys
 import gtk
-from time import sleep
-import re
+import time
 
 version     = '0.0.1'
 description = 'Persistent registers for storing and retrieving X clipboard data.'
-default_regfile = os.path.expanduser('~/.registers')
+default_regfile = os.path.expanduser('~/.registers.json')
 
 operations = {
   'get'    : lambda r,rs,cb: cb.write(rs.get(r, '')),
-  'put'    : lambda r,rs,cb: rs.__setitem__(r, escape(cb.read())),
-  'echo'   : lambda r,rs,cb: stdout.write(rs.get(r, '')),
+  'put'    : lambda r,rs,cb: rs.__setitem__(r, cb.read()),
+  'echo'   : lambda r,rs,cb: sys.stdout.write(rs.get(r, '')),
   'delete' : lambda r,rs,cb: rs.pop(r, None)
 }
 
@@ -64,16 +64,18 @@ def readin(regfile):
   if os.path.exists(regfile):
     with open(regfile, 'r') as rf:
       try:
-        obj = load(rf)
-      except Exception as err:
-        raise ValueError("Corrupt registers file %s: %s" % (regfile, err))
+        obj = json.load(rf)
+      except ValueError as err:
+        raise ValueError("JSON decoding error when reading %s: %s" % (regfile, err))
+    if not isinstance(obj, dict):
+      raise TypeError("%s is not a dict" % obj)
     return obj
   return {}
 
 def writeout(registers, regfile):
   """Dump registers to disk."""
   with open(regfile, 'w') as rf:
-    dump(registers, rf)
+    json.dump(registers, rf)
 
 class Clipboard():
   """Wrapper for a clipboard implementation (currently GTK).
@@ -87,29 +89,9 @@ class Clipboard():
     """Set clipboard contents from a string."""
     self.__backend.set_text(txt)
     self.__backend.store()
-    sleep(0.05) # give clients time to register the owner change
+    time.sleep(0.05) # give clients time to register the owner change
     while gtk.events_pending():
       gtk.main_iteration()
-
-
-def escape(s, match_re=re.compile('([\\\\\n=])')):
-  return match_re.sub('\\\\\g<1>', s)
-
-def unescape(s, match_re=re.compile('\\\\(.|$)', re.MULTILINE)):
-  return match_re.sub('\g<1>', s)
-
-def loads(s, outer=re.compile('(?<!\\\\)\n', re.MULTILINE), inner=re.compile('(?<!\\\\)=')):
-  return dict(map(lambda r: map(unescape, inner.split(r)), outer.split(s)))
-
-def dumps(kvs):
-  return '\n'.join(map(lambda kv: '='.join(map(escape, kv)), kvs.items()))
-
-def load(readable):
-  return loads(readable.read())
-
-def dump(kvs, writeable):
-  writeable.write(dumps(kvs))
-
 
 if __name__ == '__main__':
   main()
