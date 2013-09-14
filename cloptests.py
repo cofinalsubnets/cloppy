@@ -2,18 +2,11 @@
 import unittest
 import clop
 
-class Mock():
-  def __init__(self, **kwargs):
-    for k in kwargs:
-      setattr(self, k, kwargs[k])
-
 class MockClipboard():
-  def __init__(self, value=''):
-    self.value = value
   def read(self):
-    return self.value
+    return self.__text
   def write(self, txt):
-    self.value = txt
+    self.__text = txt
 
 class ClopTests(unittest.TestCase):
   def setUp(self):
@@ -23,27 +16,27 @@ class ClopTests(unittest.TestCase):
   def test_get(self):
     self.registers['a'] = 'b'
     clop.operations['get']('a', self.registers, self.clipboard)
-    self.assertEqual('b', self.clipboard.value)
+    self.assertEqual('b', self.clipboard.read())
     self.assertEqual('b', self.registers['a'])
 
   def test_get_empty_register(self):
-    self.clipboard.value = 'arbitrary'
+    self.clipboard.write('arbitrary')
     clop.operations['get']('a', self.registers, self.clipboard)
-    self.assertEqual('', self.clipboard.value)
+    self.assertEqual('', self.clipboard.read())
     self.assertNotIn('a', self.registers)
 
   def test_put(self):
-    self.clipboard.value = 'peanuts'
+    self.clipboard.write('peanuts')
     clop.operations['put']('squiggle', self.registers, self.clipboard)
     self.assertEqual(self.registers['squiggle'], 'peanuts')
-    self.assertEqual(self.clipboard.value, 'peanuts')
+    self.assertEqual(self.clipboard.read(), 'peanuts')
   
   def test_put_full_register(self):
     self.registers['cockatoo'] = ('kliblop', 1.23124)
-    self.clipboard.value = 'uggnog'
+    self.clipboard.write('uggnog')
     clop.operations['put']('cockatoo', self.registers, self.clipboard)
     self.assertEqual(self.registers['cockatoo'], 'uggnog')
-    self.assertEqual(self.clipboard.value, 'uggnog')
+    self.assertEqual(self.clipboard.read(), 'uggnog')
 
   def test_delete(self):
     self.registers['a'] = 'ohgodplease'

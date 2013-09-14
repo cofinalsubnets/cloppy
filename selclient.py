@@ -8,12 +8,11 @@
 # clop.py to set its contents in the same way as the CLIPBOARD selection.
 
 import clop
-import argparse
 import gtk
-import os
+import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--no-fork', dest='fork', action='store_false', default=True)
+parser.add_argument('--no-daemon', dest='daemonize', action='store_false', default=True)
 parser.add_argument('-s', '--selection', default='PRIMARY')
 parser.add_argument('--debug', action='store_true', default=False)
 
@@ -22,20 +21,18 @@ class Clipboard(clop.Clipboard):
     self.__backend.connect('owner-change', callback)
 
 class SelectionClient():
-
   def __init__(self, selection, debug=False):
     self.clipboard = Clipboard(selection)
     self.debug = debug
 
   def callback(self, cb, change):
-
-    txt = self.clipboard.read()
     if self.debug:
       print("event: %s" % change)
-      print("text:  %s" % txt)
-    if txt:
-      self.last = txt
-    if change.reason != 0: # 0: new owner; 1: owner destroyed; 2: owner closed
+      print("text:  %s" % self.clipboard.read())
+
+    if change.reason is 0: # 0: new owner; 1: owner destroyed; 2: owner closed
+      self.last = self.clipboard.read()
+    else:
       self.clipboard.write(self.last)
 
   def start(self):
@@ -43,17 +40,23 @@ class SelectionClient():
     self.clipboard.on_change(self.callback)
     gtk.main()
 
+
+def daemonize():
+  import os
+  os.fork() and exit()
+  os.setsid()
+  os.fork() and exit()
+
+  for fd in range(3):
+    os.close(fd)
+
+  for mode in 'rww':
+    open(os.devnull, mode)
+
 def main():
   opts = parser.parse_args()
-  selclient = SelectionClient(opts.selection, opts.debug)
-  if opts.fork:
-    pid = os.fork()
-    if pid == 0:
-      selclient.start()
-    else:
-      print pid
-  else:
-    selclient.start()
+  if opts.daemonize: daemonize()
+  SelectionClient(opts.selection, opts.debug).start()
 
 if __name__ == '__main__':
   main()

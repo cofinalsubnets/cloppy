@@ -1,7 +1,5 @@
 #!/usr/bin/env python2
 #
-# feivel jellyfish wrote this in 2013. do what you want.
-#
 # clop.py adds registers (like in vim or emacs) to the X window system.
 # registers are stored on disk, so it doesn't need to run as a daemon.
 # it's non-interactive and CLI-based so you can hook it up to your window
@@ -21,12 +19,15 @@
 
 import os.path
 import json
-import argparse
 import sys
 import gtk
 import time
+import argparse
 
-version     = '0.0.1'
+__author__  = 'feivel jellyfish'
+__license__ = 'do what you want'
+__version__ = '0.0'
+
 description = 'Persistent registers for storing and retrieving X clipboard data.'
 default_regfile = os.path.expanduser('~/.registers.json')
 
@@ -38,11 +39,13 @@ operations = {
 }
 
 parser = argparse.ArgumentParser(description=description)
+
 for op in operations:
   parser.add_argument('-' + op[0], '--' + op, action='append', default=[])
+
 parser.add_argument('--primary', dest='selection', action='store_const', const='PRIMARY',
-                    default='CLIPBOARD', help= "use PRIMARY X selection instead of CLIPBOARD")
-parser.add_argument('-V', '--version', action='version', version=('%(prog)s version ' + version))
+                    default='CLIPBOARD', help="use PRIMARY X selection instead of CLIPBOARD")
+parser.add_argument('-V', '--version', action='version', version=('%(prog)s version ' + __version__))
 parser.add_argument('--regfile', metavar='FILE', default=default_regfile,
                     help='store registers here instead of ' + default_regfile)
 
@@ -89,10 +92,9 @@ class Clipboard():
     """Set clipboard contents from a string."""
     self.__backend.set_text(txt)
     self.__backend.store()
-    time.sleep(0.05) # give clients time to register the owner change
+    time.sleep(0.01) # give clients time to register the owner change
     while gtk.events_pending():
       gtk.main_iteration()
 
 if __name__ == '__main__':
   main()
-

@@ -16,7 +16,7 @@ clop.py --primary -p giraffe # set the contents of `giraffe' from the PRIMARY X 
 idiot why would i want to set my clipboard contents on the command line
 ====
 you probably wouldn't. just set up keybindings to run clop.py from your window
-manager.
+manager or w/e.
 
 selclient.py
 ===
@@ -44,6 +44,5 @@ the PRIMARY selection exits very, very quickly. PRs welcome.
 
 dependencies
 ===
-`clop.py` currently depends on PyGTK, which is kind of silly. again, PRs
-welcome.
+`clop.py` currently depends on PyGTK, which is kind of silly.
 
